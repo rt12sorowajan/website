@@ -7,6 +7,8 @@
 
   /* ========== 1. Utilitas ========== */
   var DEMO = /[?&]demo\b/.test(location.search);
+  var API_DATABASE = 'https://script.google.com/macros/s/AKfycbyJP_YyJDiEDbdGjcPQY3R1d3n9HQH2FI3ESOBAbBf0oPCWrbsmN0wb8bLStCh2pz8e/exec';
+  var CLOUD_SINKRON = !DEMO && /^https?:$/.test(location.protocol);
   var KUNCI = DEMO ? 'website-rt-demo' : 'website-rt-data';
   var KUNCI_TAMPILAN = 'website-rt-tampilan';
   var VERSI = 1;
@@ -77,9 +79,39 @@
     d.versi = VERSI;
     return d;
   }
+  var simpanTimer = null;
   function simpan() {
     try { localStorage.setItem(KUNCI, JSON.stringify(D)); }
     catch (x) { toast('Gagal menyimpan: memori browser penuh', 'bahaya'); }
+    if (CLOUD_SINKRON) {
+      clearTimeout(simpanTimer);
+      simpanTimer = setTimeout(simpanCloud, 450);
+    }
+  }
+  function simpanCloud() {
+    fetch(API_DATABASE, {
+      method: 'POST',
+      body: JSON.stringify({ data: D })
+    }).then(function (r) {
+      return r.json();
+    }).then(function (r) {
+      if (r.status !== 'success') throw new Error(r.message || 'Gagal menyimpan');
+      console.log('Sinkronisasi cloud berhasil');
+    }).catch(function (x) {
+      console.warn('Sinkronisasi cloud gagal:', x);
+    });
+  }
+  function muatCloud() {
+    if (!CLOUD_SINKRON) return;
+    fetch(API_DATABASE, { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (r.status !== 'success' || !r.data) return;
+        D = migrasi(r.data);
+        try { localStorage.setItem(KUNCI, JSON.stringify(D)); } catch (x) {}
+        render();
+      })
+      .catch(function (x) { console.warn('Gagal memuat database cloud:', x); });
   }
   function cariKK(id) { return D.kk.filter(function (k) { return k.id === id; })[0]; }
   function jiwaTotal() { return D.kk.reduce(function (s, k) { return s + k.anggota.length; }, 0); }
@@ -893,6 +925,7 @@
   window.addEventListener('afterprint', function () { $('#cetak').innerHTML = ''; });
   if (DEMO && !location.hash) history.replaceState(null, '', '#/panel/ringkas');
   render();
+  muatCloud();
   if (/^https?:/.test(location.protocol)) { var mf = document.createElement('link'); mf.rel = 'manifest'; mf.href = 'manifest.webmanifest'; document.head.appendChild(mf); }
   if ('serviceWorker' in navigator && /^https?:/.test(location.protocol) && !DEMO) navigator.serviceWorker.register('sw.js').catch(function () {});
 })();
