@@ -7,7 +7,7 @@
 
   /* ========== 1. Utilitas ========== */
   var DEMO = /[?&]demo\b/.test(location.search);
-  var API_DATABASE = 'https://script.google.com/macros/s/AKfycbyJP_YyJDiEDbdGjcPQY3R1d3n9HQH2FI3ESOBAbBf0oPCWrbsmN0wb8bLStCh2pz8e/exec';
+  var API_DATABASE = 'https://script.google.com/macros/s/AKfycbyAWI1JtY-dlbeF5G4GMxFd4J9xA0wpoPxv1ypeNxfIeorQ6HKUXPOeK2_0K_guQAWW/exec';
   var CLOUD_SINKRON = !DEMO && /^https?:$/.test(location.protocol);
   var KUNCI = DEMO ? 'website-rt-demo' : 'website-rt-data';
   var KUNCI_TAMPILAN = 'website-rt-tampilan';
